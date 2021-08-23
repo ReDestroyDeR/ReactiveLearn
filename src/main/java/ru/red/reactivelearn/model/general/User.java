@@ -1,13 +1,16 @@
-package ru.red.reactivelearn.model;
+package ru.red.reactivelearn.model.general;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
+import org.springframework.security.core.userdetails.UserDetails;
+import ru.red.reactivelearn.model.tweet.Tweet;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -20,7 +23,7 @@ import java.util.UUID;
 @Setter
 @Document
 @RequiredArgsConstructor
-public class User implements Serializable {
+public class User implements UserDetails, Serializable {
     @MongoId
     private final UUID uuid;
     private final long creationTimestamp;
@@ -41,6 +44,9 @@ public class User implements Serializable {
         this.accountNonLocked = true;
         this.credentialsNonExpired = true;
         this.enabled = true;
+        this.tweets = new HashSet<>();
+        this.followers = new HashSet<>();
+        this.following = new HashSet<>();
     }
 
     // Excluding followers and following from equals and hashcode since there will be a chance for infinite recursion

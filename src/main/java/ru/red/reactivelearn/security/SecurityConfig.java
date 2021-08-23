@@ -1,7 +1,9 @@
 package ru.red.reactivelearn.security;
 
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -18,18 +20,37 @@ import ru.red.reactivelearn.service.UserService;
  * Date: 22.08.2021
  */
 
-@Configuration
+@AllArgsConstructor
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 public class SecurityConfig {
+    private final JwtAuthenticationManager authenticationManager;
+    private final SecurityContextRepository securityContextRepository;
+
     @Bean
     public SecurityWebFilterChain serverHttpSecurity(ServerHttpSecurity serverHttpSecurity) {
-        return serverHttpSecurity.formLogin().and().csrf().disable().build();
+        return serverHttpSecurity
+                .exceptionHandling()
+                .authenticationEntryPoint((exchange, ex) ->
+                        Mono.fromRunnable(() -> exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED))
+                ).accessDeniedHandler((exchange, ex) ->
+                        Mono.fromRunnable(() -> exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN))
+                ).and()
+                .csrf().disable()
+                .formLogin().disable()
+                .httpBasic().disable()
+                .authenticationManager(authenticationManager)
+                .securityContextRepository(securityContextRepository)
+                .authorizeExchange()
+                .pathMatchers(HttpMethod.OPTIONS).permitAll()
+                .pathMatchers("/api/auth").permitAll()
+                .anyExchange().authenticated()
+                .and().build();
     }
 
     @Bean
     public ReactiveUserDetailsService userDetailsService(UserService userService) {
-        return username -> Mono.just(username).as(userService::findByUsername).cast(UserDetails.class);
+        return username -> Mono.just(username).flatMap(userService::findByUsername).cast(UserDetails.class);
     }
 
     @Bean

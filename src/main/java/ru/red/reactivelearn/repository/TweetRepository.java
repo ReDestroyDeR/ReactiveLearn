@@ -2,7 +2,7 @@ package ru.red.reactivelearn.repository;
 
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
-import ru.red.reactivelearn.model.Tweet;
+import ru.red.reactivelearn.model.tweet.Tweet;
 
 import java.util.UUID;
 

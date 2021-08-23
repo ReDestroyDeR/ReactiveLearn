@@ -1,8 +1,8 @@
-package ru.red.reactivelearn.model.dto;
+package ru.red.reactivelearn.model.general.dto;
 
 import lombok.Getter;
 import lombok.Setter;
-import ru.red.reactivelearn.model.Role;
+import ru.red.reactivelearn.model.general.Role;
 
 import java.util.Arrays;
 import java.util.Objects;

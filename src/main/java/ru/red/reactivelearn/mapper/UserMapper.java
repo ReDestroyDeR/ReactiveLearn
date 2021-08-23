@@ -3,10 +3,10 @@ package ru.red.reactivelearn.mapper;
 import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import reactor.core.publisher.Flux;
-import ru.red.reactivelearn.model.Role;
-import ru.red.reactivelearn.model.Tweet;
-import ru.red.reactivelearn.model.User;
-import ru.red.reactivelearn.model.dto.UserDto;
+import ru.red.reactivelearn.model.general.Role;
+import ru.red.reactivelearn.model.general.User;
+import ru.red.reactivelearn.model.general.dto.UserDto;
+import ru.red.reactivelearn.model.tweet.Tweet;
 import ru.red.reactivelearn.repository.TweetRepository;
 import ru.red.reactivelearn.repository.UserRepository;
 
@@ -28,10 +28,22 @@ public abstract class UserMapper {
     @Autowired
     protected TweetRepository tweetRepository;
 
+    /**
+     * User -> UserDto mapper
+     *
+     * @param user input
+     * @return <code>UserDto</code> representation
+     */
     public UserDto userToUserDto(User user) {
         return singleUserToUserDto(user);
     }
 
+    /**
+     * UserDto -> User mapper
+     *
+     * @param userDto input
+     * @return <code>User</code> representation
+     */
     public User userDtoToUser(UserDto userDto) {
         return singleUserDtoToUser(userDto);
     }

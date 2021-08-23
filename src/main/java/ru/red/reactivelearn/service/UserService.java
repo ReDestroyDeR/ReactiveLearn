@@ -1,7 +1,8 @@
 package ru.red.reactivelearn.service;
 
 import reactor.core.publisher.Mono;
-import ru.red.reactivelearn.model.User;
+import ru.red.reactivelearn.model.general.User;
+import ru.red.reactivelearn.model.general.dto.security.UserAuthRequest;
 
 import java.util.UUID;
 
@@ -10,11 +11,14 @@ import java.util.UUID;
  * Date: 22.08.2021
  */
 public interface UserService {
-     Mono<User> save(Mono<User> user);
 
-     Mono<User> findById(Mono<UUID> uuid);
+     Mono<User> add(UserAuthRequest user);
 
-     Mono<User> findByUsername(Mono<String> username);
+     Mono<User> save(User user);
 
-     Mono<Void> delete(Mono<User> user);
+     Mono<User> findById(UUID uuid);
+
+     Mono<User> findByUsername(String username);
+
+     Mono<Void> delete(User user);
 }

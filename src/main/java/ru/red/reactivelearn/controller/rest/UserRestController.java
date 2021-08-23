@@ -1,10 +1,17 @@
 package ru.red.reactivelearn.controller.rest;
 
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 import ru.red.reactivelearn.mapper.UserMapper;
-import ru.red.reactivelearn.model.User;
-import ru.red.reactivelearn.model.dto.UserDto;
+import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.service.UserService;
 
 import java.util.UUID;
@@ -25,21 +32,38 @@ public class UserRestController {
         this.userMapper = userMapper;
     }
 
-    @PostMapping()
-    public Mono<UserDto> save(@RequestBody UserDto userDto) {
-        return userService.save(Mono.just(userMapper.userDtoToUser(userDto))).map(userMapper::userToUserDto);
+    @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public Mono<ResponseEntity<UserDto>> save(@RequestBody UserDto userDto) {
+        return userService.save(userMapper.userDtoToUser(userDto))
+                .map(userMapper::userToUserDto)
+                .map(ResponseEntity::ok)
+                .onErrorResume(x -> Mono.just(ResponseEntity.badRequest().build()));
     }
 
-    @GetMapping("/{uuid}")
-    public Mono<User> findById(@PathVariable UUID uuid) {
-        return userService.findById(Mono.just(uuid));
+    @GetMapping("/uuid")
+    @PreAuthorize("hasAnyAuthority({'USER', 'ADMIN'})")
+    public Mono<ResponseEntity<UserDto>> findById(@RequestParam("uuid") UUID uuid) {
+        return userService.findById(uuid)
+                .map(userMapper::userToUserDto)
+                .map(ResponseEntity::ok)
+                .onErrorResume(x -> Mono.just(ResponseEntity.notFound().build()));
     }
 
-    public Mono<User> findByUsername(String username) {
-        return userService.findByUsername(Mono.just(username));
+    @GetMapping("/username")
+    @PreAuthorize("hasAnyAuthority({'USER', 'ADMIN'})")
+    public Mono<ResponseEntity<UserDto>> findByUsername(@RequestParam("username") String username) {
+        return userService.findByUsername(username)
+                .map(userMapper::userToUserDto)
+                .map(ResponseEntity::ok)
+                .onErrorResume(x -> Mono.just(ResponseEntity.notFound().build()));
     }
 
-    public Mono<Void> delete(UserDto userDto) {
-        return userService.delete(Mono.just(userMapper.userDtoToUser(userDto)));
+    @DeleteMapping
+    @PreAuthorize("hasAnyAuthority({'USER', 'ADMIN'})")
+    public Mono<ResponseEntity<Void>> delete(@RequestBody UserDto userDto) {
+        return userService.delete((userMapper.userDtoToUser(userDto)))
+                .map(ResponseEntity::ok)
+                .onErrorResume(x -> Mono.just(ResponseEntity.badRequest().build()));
     }
 }
