@@ -3,17 +3,13 @@ package ru.red.reactivelearn.mapper;
 import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import reactor.core.publisher.Flux;
-import ru.red.reactivelearn.model.general.Role;
 import ru.red.reactivelearn.model.general.User;
 import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.tweet.Tweet;
 import ru.red.reactivelearn.repository.TweetRepository;
 import ru.red.reactivelearn.repository.UserRepository;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Daniil Shreyder
@@ -53,13 +49,13 @@ public abstract class UserMapper {
         UserDto dto = new UserDto();
         dto.setUuid(user.getUuid());
         dto.setCreationTimestamp(user.getCreationTimestamp());
-        dto.setAuthorities(user.getAuthorities().toArray(Role[]::new));
+        dto.setAuthorities(user.getAuthorities());
         dto.setUsername(user.getUsername());
         dto.setPassword(user.getPassword());
 
-        dto.setFollowers(user.getFollowers().stream().map(User::getUuid).toArray(UUID[]::new));
-        dto.setFollowing(user.getFollowing().stream().map(User::getUuid).toArray(UUID[]::new));
-        dto.setTweets(user.getTweets().stream().map(Tweet::getUuid).toArray(UUID[]::new));
+        dto.setFollowers(user.getFollowers().map(UserDto::getUuid).toStream().collect(Collectors.toSet()));
+        dto.setFollowing(user.getFollowing().map(UserDto::getUuid).toStream().collect(Collectors.toSet()));
+        dto.setTweets(user.getTweets().map(Tweet::getUuid).toStream().collect(Collectors.toSet()));
 
         dto.setAccountNonExpired(user.isAccountNonExpired());
         dto.setAccountNonLocked(user.isAccountNonLocked());
@@ -70,25 +66,18 @@ public abstract class UserMapper {
 
     private User singleUserDtoToUser(UserDto userDto) {
         User user = new User(userDto.getUuid(), userDto.getCreationTimestamp());
-        user.setAuthorities(List.of(userDto.getAuthorities()));
+        user.setAuthorities(userDto.getAuthorities());
         user.setUsername(userDto.getUsername());
         user.setPassword(userDto.getPassword());
 
+        user.setFollowers(Flux.fromIterable(userDto.getFollowers())
+                .flatMap(userRepository::findById));
 
-        Flux.fromArray(userDto.getFollowers())
-                .flatMap(userRepository::findById)
-                .collect(HashSet<User>::new, Set::add)
-                .subscribe(user::setFollowers);
+        user.setFollowing(Flux.fromIterable(userDto.getFollowing())
+                .flatMap(userRepository::findById));
 
-        Flux.fromArray(userDto.getFollowing())
-                .flatMap(userRepository::findById)
-                .collect(HashSet<User>::new, Set::add)
-                .subscribe(user::setFollowing);
-
-        Flux.fromArray(userDto.getTweets())
-                .flatMap(tweetRepository::findById)
-                .collect(HashSet<Tweet>::new, Set::add)
-                .subscribe(user::setTweets);
+        user.setTweets(Flux.fromIterable(userDto.getTweets())
+                .flatMap(tweetRepository::findById));
 
         user.setAccountNonExpired(userDto.isAccountNonExpired());
         user.setAccountNonLocked(userDto.isAccountNonLocked());

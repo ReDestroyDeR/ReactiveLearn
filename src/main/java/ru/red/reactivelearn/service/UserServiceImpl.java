@@ -1,11 +1,14 @@
 package ru.red.reactivelearn.service;
 
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.red.reactivelearn.model.general.Role;
-import ru.red.reactivelearn.model.general.User;
+import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.general.dto.security.UserAuthRequest;
 import ru.red.reactivelearn.repository.UserRepository;
 
@@ -21,17 +24,16 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PaginationService<UserDto, UUID> paginationService;
 
     @Override
-    public Mono<User> add(UserAuthRequest userAuthRequest) {
-        User user = new User(
-                UUID.randomUUID(),
-                LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli()
-        );
-
+    public Mono<UserDto> add(UserAuthRequest userAuthRequest) {
+        UserDto user = new UserDto();
+        user.setUuid(UUID.randomUUID());
+        user.setCreationTimestamp(LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli());
         user.setUsername(userAuthRequest.getUsername());
         user.setPassword(passwordEncoder.encode(userAuthRequest.getPassword()));
         user.setAuthorities(Set.of(Role.USER));
@@ -44,22 +46,34 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public Mono<User> save(User user) {
+    public Mono<UserDto> save(UserDto user) {
         return userRepository.save(user);
     }
 
     @Override
-    public Mono<User> findById(UUID uuid) {
+    public Mono<Page<UserDto>> findAllUsersPaged(Pageable pageable) {
+        return paginationService.getPage(userRepository, pageable);
+    }
+
+    @Override
+    public Mono<UserDto> findById(UUID uuid) {
         return userRepository.findById(uuid);
     }
 
     @Override
-    public Mono<User> findByUsername(String username) {
+    public Mono<UserDto> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
     @Override
-    public Mono<Void> delete(User user) {
+    public Flux<UserDto> findFollowingByUsername(String username) {
+        return userRepository.findFollowingByUsername(username)
+                .flatMapMany(user -> Flux.fromIterable(user.getFollowing())
+                        .flatMap(userRepository::findById));
+    }
+
+    @Override
+    public Mono<Void> delete(UserDto user) {
         return userRepository.delete(user);
     }
 }

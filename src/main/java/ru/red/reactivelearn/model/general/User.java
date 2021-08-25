@@ -3,14 +3,14 @@ package ru.red.reactivelearn.model.general;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 import org.springframework.security.core.userdetails.UserDetails;
+import reactor.core.publisher.Flux;
+import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.tweet.Tweet;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -21,7 +21,6 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@Document
 @RequiredArgsConstructor
 public class User implements UserDetails, Serializable {
     @MongoId
@@ -35,18 +34,18 @@ public class User implements UserDetails, Serializable {
     private boolean credentialsNonExpired;
     private boolean enabled;
 
-    private Collection<Tweet> tweets;
-    private Collection<User> followers;
-    private Collection<User> following;
+    private Flux<Tweet> tweets;
+    private Flux<UserDto> followers;
+    private Flux<UserDto> following;
 
     {
         this.accountNonExpired = true;
         this.accountNonLocked = true;
         this.credentialsNonExpired = true;
         this.enabled = true;
-        this.tweets = new HashSet<>();
-        this.followers = new HashSet<>();
-        this.following = new HashSet<>();
+        this.tweets = Flux.empty();
+        this.followers = Flux.empty();
+        this.following = Flux.empty();
     }
 
     // Excluding followers and following from equals and hashcode since there will be a chance for infinite recursion

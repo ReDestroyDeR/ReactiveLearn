@@ -1,5 +1,9 @@
-package ru.red.reactivelearn.controller.rest;
+package ru.red.reactivelearn.controller.user.rest;
 
+import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -10,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
-import ru.red.reactivelearn.mapper.UserMapper;
 import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.service.UserService;
 
@@ -22,47 +25,43 @@ import java.util.UUID;
  */
 
 @RestController
-@RequestMapping("/api/user")
+@AllArgsConstructor
+@RequestMapping("/api/user/user")
+@PreAuthorize("hasAuthority({'USER'})")
 public class UserRestController {
     private final UserService userService;
-    private final UserMapper userMapper;
-
-    public UserRestController(UserService userService, UserMapper userMapper) {
-        this.userService = userService;
-        this.userMapper = userMapper;
-    }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<ResponseEntity<UserDto>> save(@RequestBody UserDto userDto) {
-        return userService.save(userMapper.userDtoToUser(userDto))
-                .map(userMapper::userToUserDto)
+        return userService.save(userDto)
                 .map(ResponseEntity::ok)
                 .onErrorResume(x -> Mono.just(ResponseEntity.badRequest().build()));
     }
 
+    @GetMapping
+    public Mono<Page<UserDto>> getPage(@RequestParam(required = false, defaultValue = "0") int page,
+                                       @RequestParam(required = false, defaultValue = "10") int size,
+                                       @RequestParam(required = false, defaultValue = "username") String sort) {
+        return userService.findAllUsersPaged(PageRequest.of(page, size, Sort.by(sort.split("[+]"))));
+    }
+
     @GetMapping("/uuid")
-    @PreAuthorize("hasAnyAuthority({'USER', 'ADMIN'})")
     public Mono<ResponseEntity<UserDto>> findById(@RequestParam("uuid") UUID uuid) {
         return userService.findById(uuid)
-                .map(userMapper::userToUserDto)
                 .map(ResponseEntity::ok)
-                .onErrorResume(x -> Mono.just(ResponseEntity.notFound().build()));
+                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 
     @GetMapping("/username")
-    @PreAuthorize("hasAnyAuthority({'USER', 'ADMIN'})")
     public Mono<ResponseEntity<UserDto>> findByUsername(@RequestParam("username") String username) {
         return userService.findByUsername(username)
-                .map(userMapper::userToUserDto)
                 .map(ResponseEntity::ok)
-                .onErrorResume(x -> Mono.just(ResponseEntity.notFound().build()));
+                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 
     @DeleteMapping
-    @PreAuthorize("hasAnyAuthority({'USER', 'ADMIN'})")
     public Mono<ResponseEntity<Void>> delete(@RequestBody UserDto userDto) {
-        return userService.delete((userMapper.userDtoToUser(userDto)))
+        return userService.delete(userDto)
                 .map(ResponseEntity::ok)
                 .onErrorResume(x -> Mono.just(ResponseEntity.badRequest().build()));
     }

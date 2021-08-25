@@ -1,7 +1,10 @@
 package ru.red.reactivelearn.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.red.reactivelearn.model.general.User;
+import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.general.dto.security.UserAuthRequest;
 
 import java.util.UUID;
@@ -11,14 +14,17 @@ import java.util.UUID;
  * Date: 22.08.2021
  */
 public interface UserService {
+    Mono<UserDto> add(UserAuthRequest user);
 
-     Mono<User> add(UserAuthRequest user);
+    Mono<UserDto> save(UserDto user);
 
-     Mono<User> save(User user);
+    Mono<Page<UserDto>> findAllUsersPaged(Pageable pageable);
 
-     Mono<User> findById(UUID uuid);
+    Mono<UserDto> findById(UUID uuid);
 
-     Mono<User> findByUsername(String username);
+    Mono<UserDto> findByUsername(String username);
 
-     Mono<Void> delete(User user);
+    Flux<UserDto> findFollowingByUsername(String username);
+
+    Mono<Void> delete(UserDto user);
 }

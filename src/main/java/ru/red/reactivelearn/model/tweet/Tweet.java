@@ -20,7 +20,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class Tweet implements Serializable {
     @MongoId
-    private final UUID uuid;
-    private final long creationTimestamp;
+    private UUID uuid;
+    private UUID author;
+    private Long creationTimestamp;
     private String contents;
 }

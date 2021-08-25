@@ -1,9 +1,10 @@
 package ru.red.reactivelearn.repository;
 
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
-import ru.red.reactivelearn.model.general.User;
+import ru.red.reactivelearn.model.general.dto.UserDto;
 
 import java.util.UUID;
 
@@ -13,7 +14,14 @@ import java.util.UUID;
  */
 
 @Repository
-public interface UserRepository extends ReactiveMongoRepository<User, UUID> {
-    Mono<User> findByCreationTimestamp(long creationTimestamp);
-    Mono<User> findByUsername(String username);
+public interface UserRepository extends ReactiveMongoRepository<UserDto, UUID> {
+    Mono<UserDto> findByCreationTimestamp(long creationTimestamp);
+
+    Mono<UserDto> findByUsername(String username);
+
+    @Query(value = "{ 'username' : ?0 }", fields = " { 'following' : 1 }")
+    Mono<UserDto> findFollowingByUsername(String username);
+
+    @Query(value = "{ '_id' : ?0 }", fields = " { 'tweets' : 1 }")
+    Mono<UserDto> findTweetsById(UUID uuid);
 }

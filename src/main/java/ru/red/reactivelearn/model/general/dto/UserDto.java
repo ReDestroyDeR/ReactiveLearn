@@ -2,9 +2,13 @@ package ru.red.reactivelearn.model.general.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 import ru.red.reactivelearn.model.general.Role;
 
-import java.util.Arrays;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -15,20 +19,33 @@ import java.util.UUID;
 
 @Getter
 @Setter
-public class UserDto {
+@Document
+public class UserDto implements Serializable {
+    @MongoId
     private UUID uuid;
     private long creationTimestamp;
     private String username;
     private String password;
-    private Role[] authorities;
+    private Collection<Role> authorities;
     private boolean accountNonExpired;
     private boolean accountNonLocked;
     private boolean credentialsNonExpired;
     private boolean enabled;
 
-    private UUID[] tweets;
-    private UUID[] followers;
-    private UUID[] following;
+    private Collection<UUID> tweets;
+    private Collection<UUID> followers;
+    private Collection<UUID> following;
+
+    {
+        this.accountNonExpired = true;
+        this.accountNonLocked = true;
+        this.credentialsNonExpired = true;
+        this.enabled = true;
+        this.authorities = Collections.emptySet();
+        this.tweets = Collections.emptySet();
+        this.followers = Collections.emptySet();
+        this.following = Collections.emptySet();
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -42,17 +59,13 @@ public class UserDto {
                 && enabled == userDto.enabled
                 && uuid.equals(userDto.uuid)
                 && username.equals(userDto.username)
-                && password.equals(userDto.password)
-                && Arrays.equals(authorities, userDto.authorities)
-                && Arrays.equals(tweets, userDto.tweets)
-                && Arrays.equals(followers, userDto.followers)
-                && Arrays.equals(following, userDto.following);
+                && password.equals(userDto.password);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(
-                uuid, 
+        return Objects.hash(
+                uuid,
                 creationTimestamp,
                 username,
                 password,
@@ -60,12 +73,24 @@ public class UserDto {
                 accountNonLocked,
                 credentialsNonExpired,
                 enabled);
-        result = 31 * result + Arrays.hashCode(authorities);
-        result = 31 * result + Arrays.hashCode(tweets);
-        result = 31 * result + Arrays.hashCode(followers);
-        result = 31 * result + Arrays.hashCode(following);
-        return result;
     }
 
 
+    @Override
+    public String toString() {
+        return "UserDto{" +
+                "uuid=" + uuid +
+                ", creationTimestamp=" + creationTimestamp +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", authorities=" + authorities +
+                ", accountNonExpired=" + accountNonExpired +
+                ", accountNonLocked=" + accountNonLocked +
+                ", credentialsNonExpired=" + credentialsNonExpired +
+                ", enabled=" + enabled +
+                ", tweets=" + tweets +
+                ", followers=" + followers +
+                ", following=" + following +
+                '}';
+    }
 }
