@@ -1,7 +1,6 @@
 package ru.red.reactivelearn.controller.user.rest;
 
 import lombok.AllArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +15,7 @@ import ru.red.reactivelearn.model.general.Role;
 import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.general.dto.security.UserAuthRequest;
 import ru.red.reactivelearn.model.general.dto.security.UserAuthResponse;
+import ru.red.reactivelearn.model.web.ServerResponse;
 import ru.red.reactivelearn.security.JwtUtils;
 import ru.red.reactivelearn.service.UserService;
 
@@ -35,27 +35,27 @@ public class AuthenticationRestController {
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping
-    public Mono<ResponseEntity<UserAuthResponse>> login(@RequestBody UserAuthRequest authRequest) {
+    public Mono<ServerResponse<UserAuthResponse>> login(@RequestBody UserAuthRequest authRequest) {
         return userService.findByUsername(authRequest.getUsername())
                 .filter(user -> passwordEncoder.matches(authRequest.getPassword(), user.getPassword()))
-                .map(user -> ResponseEntity.ok(new UserAuthResponse(jwtUtils.createJws(userMapper.userDtoToUser(user)))))
-                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+                .map(user -> ServerResponse.ok(new UserAuthResponse(jwtUtils.createJws(userMapper.userDtoToUser(user)))))
+                .switchIfEmpty(Mono.just(ServerResponse.notFound()));
     }
 
     @PostMapping
-    public Mono<ResponseEntity<UserAuthResponse>> register(@RequestBody UserAuthRequest authRequest) {
+    public Mono<ServerResponse<UserAuthResponse>> register(@RequestBody UserAuthRequest authRequest) {
         return userService.add(authRequest)
-                .map(user -> ResponseEntity.ok(new UserAuthResponse(jwtUtils.createJws(userMapper.userDtoToUser(user)))))
-                .onErrorResume(ex -> Mono.just(ResponseEntity.badRequest().build()));
+                .map(user -> ServerResponse.ok(new UserAuthResponse(jwtUtils.createJws(userMapper.userDtoToUser(user)))))
+                .onErrorResume(ex -> Mono.just(ServerResponse.badRequest(ex)));
     }
 
     // lol endpoint. To be removed in the next commit
     @PutMapping
-    public Mono<ResponseEntity<UserDto>> upgradeToAdmin(Authentication authentication) {
+    public Mono<ServerResponse<UserDto>> upgradeToAdmin(Authentication authentication) {
         return userService.findByUsername(authentication.getName())
                 .flatMap(user -> {
                     user.getAuthorities().add(Role.ADMIN);
-                    return userService.save(user).map(ResponseEntity::ok);
+                    return userService.save(user).map(ServerResponse::ok);
                 });
     }
 }

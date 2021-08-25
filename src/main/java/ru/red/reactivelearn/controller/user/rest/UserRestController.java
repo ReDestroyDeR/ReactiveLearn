@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 import ru.red.reactivelearn.model.general.dto.UserDto;
+import ru.red.reactivelearn.model.web.ServerResponse;
 import ru.red.reactivelearn.service.UserService;
 
 import java.util.UUID;
@@ -32,37 +32,39 @@ public class UserRestController {
     private final UserService userService;
 
     @PostMapping
-    public Mono<ResponseEntity<UserDto>> save(@RequestBody UserDto userDto) {
+    public Mono<ServerResponse<UserDto>> save(@RequestBody UserDto userDto) {
         return userService.save(userDto)
-                .map(ResponseEntity::ok)
-                .onErrorResume(x -> Mono.just(ResponseEntity.badRequest().build()));
+                .map(ServerResponse::ok)
+                .onErrorResume(ex -> Mono.just(ServerResponse.badRequest(ex)));
     }
 
     @GetMapping
-    public Mono<Page<UserDto>> getPage(@RequestParam(required = false, defaultValue = "0") int page,
+    public Mono<ServerResponse<Page<UserDto>>> getPage(@RequestParam(required = false, defaultValue = "0") int page,
                                        @RequestParam(required = false, defaultValue = "10") int size,
                                        @RequestParam(required = false, defaultValue = "username") String sort) {
-        return userService.findAllUsersPaged(PageRequest.of(page, size, Sort.by(sort.split("[+]"))));
+        return userService.findAllUsersPaged(PageRequest.of(page, size, Sort.by(sort.split("[+]"))))
+                .map(ServerResponse::ok)
+                .onErrorResume(ex -> Mono.just(ServerResponse.badRequest(ex)));
     }
 
     @GetMapping("/uuid")
-    public Mono<ResponseEntity<UserDto>> findById(@RequestParam("uuid") UUID uuid) {
+    public Mono<ServerResponse<UserDto>> findById(@RequestParam("uuid") UUID uuid) {
         return userService.findById(uuid)
-                .map(ResponseEntity::ok)
-                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+                .map(ServerResponse::ok)
+                .switchIfEmpty(Mono.just(ServerResponse.notFound()));
     }
 
     @GetMapping("/username")
-    public Mono<ResponseEntity<UserDto>> findByUsername(@RequestParam("username") String username) {
+    public Mono<ServerResponse<UserDto>> findByUsername(@RequestParam("username") String username) {
         return userService.findByUsername(username)
-                .map(ResponseEntity::ok)
-                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+                .map(ServerResponse::ok)
+                .switchIfEmpty(Mono.just(ServerResponse.notFound()));
     }
 
     @DeleteMapping
-    public Mono<ResponseEntity<Void>> delete(@RequestBody UserDto userDto) {
+    public Mono<ServerResponse<Void>> delete(@RequestBody UserDto userDto) {
         return userService.delete(userDto)
-                .map(ResponseEntity::ok)
-                .onErrorResume(x -> Mono.just(ResponseEntity.badRequest().build()));
+                .map(ServerResponse::ok)
+                .onErrorResume(x -> Mono.just(ServerResponse.badRequest()));
     }
 }

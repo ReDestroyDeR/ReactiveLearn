@@ -1,7 +1,6 @@
 package ru.red.reactivelearn.mapper;
 
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import ru.red.reactivelearn.model.tweet.Tweet;
 import ru.red.reactivelearn.model.tweet.dto.TweetDto;
 
@@ -11,17 +10,29 @@ import ru.red.reactivelearn.model.tweet.dto.TweetDto;
  */
 
 @Mapper(componentModel = "spring")
-public interface TweetMapper {
+public abstract class TweetMapper {
 
-    @Mapping(source = "uuid", target = "uuid")
-    @Mapping(source = "author", target = "author")
-    @Mapping(source = "creationTimestamp", target = "creationTimestamp")
-    @Mapping(source = "contents", target = "contents")
-    Tweet tweetDtoToTweet(TweetDto tweetDto);
+    public Tweet tweetDtoToTweet(TweetDto tweetDto) {
+        if (tweetDto == null)
+            return null;
 
-    @Mapping(source = "uuid", target = "uuid")
-    @Mapping(source = "author", target = "author")
-    @Mapping(source = "creationTimestamp", target = "creationTimestamp")
-    @Mapping(source = "contents", target = "contents")
-    TweetDto tweetToTweetDto(Tweet tweet);
+        Tweet tweet = new Tweet();
+        tweet.setUuid(tweetDto.getUuid());
+        tweet.setAuthor(tweetDto.getAuthor());
+        tweet.setCreationTimestamp(tweetDto.getCreationTimestamp());
+        tweet.setContents(tweetDto.getContents());
+        return tweet;
+    }
+
+    public TweetDto tweetToTweetDto(Tweet tweet) {
+        if (tweet == null)
+            return null;
+
+        TweetDto tweetDto = new TweetDto();
+        tweetDto.setUuid(tweet.getUuid());
+        tweetDto.setAuthor(tweet.getAuthor());
+        tweetDto.setCreationTimestamp(tweet.getCreationTimestamp());
+        tweetDto.setContents(tweet.getContents());
+        return tweetDto;
+    }
 }

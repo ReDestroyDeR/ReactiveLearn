@@ -29,13 +29,9 @@ public class TweetServiceImpl implements TweetService {
     public Mono<Tweet> add(User user, Tweet tweet) {
         return findById(tweet.getUuid())
                 .hasElement()
-                .handle(((exists, tweetSynchronousSink) -> {
-                    if (exists) {
-                        tweetSynchronousSink.error(new IllegalStateException("Tweet already exists"));
-                    } else {
-                        this.save(tweet).subscribe(tweetSynchronousSink::next);
-                    }
-                }));
+                .flatMap(exists -> exists
+                        ? Mono.error(new IllegalStateException("Tweet already exists"))
+                        : this.save(tweet));
     }
 
     @Override
