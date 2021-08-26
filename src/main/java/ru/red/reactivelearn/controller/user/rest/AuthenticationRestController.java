@@ -15,7 +15,6 @@ import ru.red.reactivelearn.model.general.Role;
 import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.general.dto.security.UserAuthRequest;
 import ru.red.reactivelearn.model.general.dto.security.UserAuthResponse;
-import ru.red.reactivelearn.model.web.ServerResponse;
 import ru.red.reactivelearn.security.JwtUtils;
 import ru.red.reactivelearn.service.UserService;
 
@@ -35,27 +34,25 @@ public class AuthenticationRestController {
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping
-    public Mono<ServerResponse<UserAuthResponse>> login(@RequestBody UserAuthRequest authRequest) {
+    public Mono<UserAuthResponse> login(@RequestBody UserAuthRequest authRequest) {
         return userService.findByUsername(authRequest.getUsername())
                 .filter(user -> passwordEncoder.matches(authRequest.getPassword(), user.getPassword()))
-                .map(user -> ServerResponse.ok(new UserAuthResponse(jwtUtils.createJws(userMapper.userDtoToUser(user)))))
-                .switchIfEmpty(Mono.just(ServerResponse.notFound()));
+                .map(user -> new UserAuthResponse(jwtUtils.createJws(userMapper.userDtoToUser(user))));
     }
 
     @PostMapping
-    public Mono<ServerResponse<UserAuthResponse>> register(@RequestBody UserAuthRequest authRequest) {
+    public Mono<UserAuthResponse> register(@RequestBody UserAuthRequest authRequest) {
         return userService.add(authRequest)
-                .map(user -> ServerResponse.ok(new UserAuthResponse(jwtUtils.createJws(userMapper.userDtoToUser(user)))))
-                .onErrorResume(ex -> Mono.just(ServerResponse.badRequest(ex)));
+                .map(user -> new UserAuthResponse(jwtUtils.createJws(userMapper.userDtoToUser(user))));
     }
 
     // lol endpoint. To be removed in the next commit
     @PutMapping
-    public Mono<ServerResponse<UserDto>> upgradeToAdmin(Authentication authentication) {
+    public Mono<UserDto> upgradeToAdmin(Authentication authentication) {
         return userService.findByUsername(authentication.getName())
                 .flatMap(user -> {
                     user.getAuthorities().add(Role.ADMIN);
-                    return userService.save(user).map(ServerResponse::ok);
+                    return userService.save(user);
                 });
     }
 }

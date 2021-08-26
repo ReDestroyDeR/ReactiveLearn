@@ -1,9 +1,9 @@
 package ru.red.reactivelearn.model.web;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.ServerHttpResponse;
 import ru.red.reactivelearn.exception.BadRequestException;
 import ru.red.reactivelearn.exception.ForbiddenException;
 import ru.red.reactivelearn.exception.NotFoundException;
@@ -17,9 +17,11 @@ import javax.validation.constraints.NotNull;
  */
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class ServerResponse<T> {
+    @NotNull
+    private ServerHttpResponse response;
+
     private HttpStatus status;
     private T payload;
     private String message;
@@ -143,5 +145,12 @@ public class ServerResponse<T> {
     public static <T> ServerResponse<T> createServerResponse(HttpStatus status, T payload,
                                                              String message, Throwable exception) {
         return new ServerResponse<>(status, payload, message, exception);
+    }
+
+    public ServerResponse(HttpStatus status, T payload, String message, Throwable exception) {
+        this.status = status;
+        this.payload = payload;
+        this.message = message;
+        this.exception = exception;
     }
 }

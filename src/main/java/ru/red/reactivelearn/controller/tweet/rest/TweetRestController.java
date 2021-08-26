@@ -15,12 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
+import ru.red.reactivelearn.exception.BadRequestException;
+import ru.red.reactivelearn.exception.NotFoundException;
 import ru.red.reactivelearn.mapper.TweetMapper;
 import ru.red.reactivelearn.mapper.UserMapper;
 import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.tweet.dto.TweetDto;
 import ru.red.reactivelearn.model.tweet.dto.TweetPostDto;
-import ru.red.reactivelearn.model.web.ServerResponse;
 import ru.red.reactivelearn.service.TweetService;
 import ru.red.reactivelearn.service.UserService;
 
@@ -45,7 +46,7 @@ public class TweetRestController {
     private final UserMapper userMapper;
 
     @PostMapping
-    public Mono<ServerResponse<TweetDto>> create(@AuthenticationPrincipal String username,
+    public Mono<TweetDto> create(@AuthenticationPrincipal String username,
                                                  @RequestBody TweetPostDto tweetPostDto) {
         Mono<UserDto> userDto = userService.findByUsername(username);
 
@@ -72,8 +73,7 @@ public class TweetRestController {
                         )
                 )
                 .map(tweetMapper::tweetToTweetDto)
-                .map(ServerResponse::ok)
-                .onErrorResume(e -> Mono.just(ServerResponse.badRequest(e)));
+                .onErrorResume(ex -> Mono.error(() -> new BadRequestException(ex)));
     }
 
     /* Code for checking if tweet already exists TODO: Patch mapping
@@ -84,34 +84,31 @@ public class TweetRestController {
      */
 
     @GetMapping
-    public Mono<ServerResponse<Page<TweetDto>>> getPage(@RequestParam(required = false, defaultValue = "0") int page,
+    public Mono<Page<TweetDto>> getPage(@RequestParam(required = false, defaultValue = "0") int page,
                                         @RequestParam(required = false, defaultValue = "10") int size) {
         return tweetService.findAllTweetsPaged(PageRequest.of(page, size))
                 .map(pageInstance -> pageInstance.map(tweetMapper::tweetToTweetDto))
-                .map(ServerResponse::ok)
-                .onErrorResume(ex -> Mono.just(ServerResponse.badRequest(ex)));
+                .onErrorResume(ex -> Mono.error(() -> new BadRequestException(ex)));
     }
 
     @GetMapping("/uuid")
-    public Mono<ServerResponse<TweetDto>> findById(@RequestParam("uuid") UUID uuid) {
+    public Mono<TweetDto> findById(@RequestParam("uuid") UUID uuid) {
         return tweetService.findById(uuid)
                 .map(tweetMapper::tweetToTweetDto)
-                .map(ServerResponse::ok)
-                .switchIfEmpty(Mono.just(ServerResponse.notFound()));
+                .switchIfEmpty(Mono.error(NotFoundException::new));
     }
 
     @GetMapping("/contents")
-    public Mono<ServerResponse<TweetDto[]>> findByContents(@RequestParam("contents") String contents) {
+    public Mono<TweetDto[]> findByContents(@RequestParam("contents") String contents) {
         return tweetService.findByContent(contents)
                 .map(tweetMapper::tweetToTweetDto)
                 .collectList()
                 .map(list -> list.toArray(TweetDto[]::new))
-                .map(ServerResponse::ok)
-                .switchIfEmpty(Mono.just(ServerResponse.notFound()));
+                .switchIfEmpty(Mono.error(NotFoundException::new));
     }
 
     @DeleteMapping
-    public Mono<ServerResponse<Void>> delete(@AuthenticationPrincipal String username,
+    public Mono<Void> delete(@AuthenticationPrincipal String username,
                                              @RequestParam("uuid") UUID uuid) {
         return tweetService.findById(uuid)
                 .flatMap(tweet ->
@@ -119,9 +116,8 @@ public class TweetRestController {
                                 .flatMap(u -> !u.getUuid().equals(tweet.getAuthor())
                                         ? Mono.error(new IllegalAccessException())
                                         : tweetService.delete(uuid)
-                                                      .map(v -> ServerResponse.<Void>ok("Deleted " + tweet))
                                 )
-                .onErrorResume(ex -> Mono.just(
-                        ServerResponse.badRequest(null, "No access to the target tweet", ex))));
+                )
+                .onErrorResume(ex -> Mono.error(() -> new BadRequestException(ex)));
     }
 }
