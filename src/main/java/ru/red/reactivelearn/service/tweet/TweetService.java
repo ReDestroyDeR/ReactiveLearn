@@ -1,4 +1,4 @@
-package ru.red.reactivelearn.service;
+package ru.red.reactivelearn.service.tweet;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -22,8 +22,8 @@ import ru.red.reactivelearn.mapper.UserMapper;
 import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.tweet.dto.TweetDto;
 import ru.red.reactivelearn.model.tweet.dto.TweetPostDto;
-import ru.red.reactivelearn.service.TweetService;
-import ru.red.reactivelearn.service.UserService;
+import ru.red.reactivelearn.service.tweet.TweetService;
+import ru.red.reactivelearn.service.user.UserService;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -109,15 +109,18 @@ public class TweetRestController {
 
     @DeleteMapping
     public Mono<Void> delete(@AuthenticationPrincipal String username,
-                                             @RequestParam("uuid") UUID uuid) {
+                                       @RequestParam("uuid") UUID uuid) {
         return tweetService.findById(uuid)
+                .switchIfEmpty(Mono.error(NotFoundException::new))
                 .flatMap(tweet ->
                         userService.findByUsername(username)
                                 .flatMap(u -> !u.getUuid().equals(tweet.getAuthor())
                                         ? Mono.error(new IllegalAccessException())
                                         : tweetService.delete(uuid)
                                 )
-                )
-                .onErrorResume(ex -> Mono.error(() -> new BadRequestException(ex)));
+                                .onErrorMap(BadRequestException::new)
+                                .switchIfEmpty(Mono.error(NotFoundException::new))
+
+                );
     }
 }

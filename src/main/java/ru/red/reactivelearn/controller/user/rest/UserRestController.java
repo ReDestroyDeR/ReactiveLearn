@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 import ru.red.reactivelearn.exception.BadRequestException;
 import ru.red.reactivelearn.exception.NotFoundException;
 import ru.red.reactivelearn.model.general.dto.UserDto;
-import ru.red.reactivelearn.service.UserService;
+import ru.red.reactivelearn.service.user.UserService;
 
 import java.util.UUID;
 

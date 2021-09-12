@@ -16,7 +16,7 @@ import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.general.dto.security.UserAuthRequest;
 import ru.red.reactivelearn.model.general.dto.security.UserAuthResponse;
 import ru.red.reactivelearn.security.JwtUtils;
-import ru.red.reactivelearn.service.UserService;
+import ru.red.reactivelearn.service.user.UserService;
 
 /**
  * @author Daniil Shreyder

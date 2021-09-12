@@ -1,4 +1,4 @@
-package ru.red.reactivelearn.service;
+package ru.red.reactivelearn.service.user;
 
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,6 +11,7 @@ import ru.red.reactivelearn.model.general.Role;
 import ru.red.reactivelearn.model.general.dto.UserDto;
 import ru.red.reactivelearn.model.general.dto.security.UserAuthRequest;
 import ru.red.reactivelearn.repository.UserRepository;
+import ru.red.reactivelearn.service.pagination.PaginationService;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

@@ -18,6 +18,7 @@ import java.util.logging.Level;
 public class RolesDataInitializer {
 
     public RolesDataInitializer(RoleRepository roleRepository) {
+
         roleRepository.saveAll(Set.of(Role.values()))
                 .subscribe(r -> log.log(Level.INFO, "Saved role : " + r.name()));
     }

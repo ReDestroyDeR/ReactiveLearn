@@ -1,4 +1,4 @@
-package ru.red.reactivelearn.service;
+package ru.red.reactivelearn.service.tweet;
 
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -9,6 +9,8 @@ import reactor.core.publisher.Mono;
 import ru.red.reactivelearn.model.general.User;
 import ru.red.reactivelearn.model.tweet.Tweet;
 import ru.red.reactivelearn.repository.TweetRepository;
+import ru.red.reactivelearn.service.pagination.PaginationService;
+import ru.red.reactivelearn.service.user.UserService;
 
 import java.util.Comparator;
 import java.util.UUID;

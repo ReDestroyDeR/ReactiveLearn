@@ -1,13 +1,16 @@
 package ru.red.reactivelearn.security;
 
+import io.jsonwebtoken.JwtException;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -34,7 +37,13 @@ public class SecurityContextRepository implements ServerSecurityContextRepositor
                 .flatMap(authHeader -> {
                     String token = authHeader.substring(7);
                     Authentication auth = new UsernamePasswordAuthenticationToken(token, token);
-                    return this.authenticationManager.authenticate(auth).map(SecurityContextImpl::new);
-                });
+                    return this.authenticationManager
+                            .authenticate(auth)
+                            .map(a -> (SecurityContext) new SecurityContextImpl(a));
+                })
+                .onErrorMap(
+                        JwtException.class,
+                        autEx -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, autEx.getMessage(), autEx)
+                );
     }
 }
